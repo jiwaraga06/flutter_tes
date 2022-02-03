@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontendtes/API/Auth/index.dart';
 import 'package:frontendtes/Pages/Auth/InitData/index.dart';
+import 'package:frontendtes/Pages/Dashboard/index.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -20,9 +21,9 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
-  var showPassword = true;
   var loading = false;
   var result = {};
+  var showPassword = true;
   void changePassword() {
     setState(() {
       showPassword = !showPassword;
@@ -52,6 +53,7 @@ class _LoginState extends State<Login> {
         setState(() {
           loading = false;
         });
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => DashBoard()));
       } else if (response.statusCode == 501) {
         setState(() {
           loading = false;

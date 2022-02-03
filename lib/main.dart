@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:frontendtes/Pages/Auth/Login/index.dart';
 import 'package:frontendtes/Pages/SplashScreen/index.dart';
 
 void main() {
