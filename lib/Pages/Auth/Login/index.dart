@@ -49,6 +49,9 @@ class _LoginState extends State<Login> {
       if (response.statusCode == 200) {
         SharedPreferences preferences = await SharedPreferences.getInstance();
         preferences.setString('token', json['hasil']['token']);
+        preferences.setString('nama', json['hasil']['info']['namaLengkap']);
+        preferences.setString('email', json['hasil']['info']['email']);
+        preferences.setString('idUser', json['hasil']['info']['idUser']);
         var token = preferences.getString('token');
         setState(() {
           loading = false;

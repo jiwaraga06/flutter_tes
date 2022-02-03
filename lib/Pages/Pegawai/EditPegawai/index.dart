@@ -13,14 +13,30 @@ import 'package:http/http.dart' as http;
 import 'package:line_icons/line_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class AddPegawai extends StatefulWidget {
-  AddPegawai({Key? key}) : super(key: key);
+class EditPegawai extends StatefulWidget {
+  String idUser, nama, email, tempatLahir, tanggalLahir, password, passwordC;
+  int jabatan, departemen, unit, pendidikan, jk;
+  EditPegawai({
+    Key? key,
+    required this.nama,
+    required this.idUser,
+    required this.email,
+    required this.password,
+    required this.passwordC,
+    required this.tanggalLahir,
+    required this.tempatLahir,
+    required this.jabatan,
+    required this.departemen,
+    required this.unit,
+    required this.pendidikan,
+    required this.jk,
+  }) : super(key: key);
 
   @override
-  State<AddPegawai> createState() => _AddPegawaiState();
+  State<EditPegawai> createState() => _EditPegawaiState();
 }
 
-class _AddPegawaiState extends State<AddPegawai> {
+class _EditPegawaiState extends State<EditPegawai> {
   var connectionStatus = true;
   final formKey = GlobalKey<FormState>();
   TextEditingController controllerNama = TextEditingController();
@@ -53,6 +69,42 @@ class _AddPegawaiState extends State<AddPegawai> {
     setState(() {
       showPasswordC = !showPasswordC;
     });
+  }
+
+  void valueUpdate() {
+    if (widget.nama != '') {
+      controllerNama.text = widget.nama;
+    }
+    if (widget.email != '') {
+      controllerEmail.text = widget.email;
+    }
+    if (widget.password != '') {
+      controllerPassword.text = widget.password;
+    }
+    if (widget.password != '') {
+      controllerPasswordC.text = widget.password;
+    }
+    if (widget.tempatLahir != '') {
+      controllerTempatlahir.text = widget.tempatLahir;
+    }
+    if (widget.tanggalLahir != '') {
+      controllerTanggallahir.text = widget.tanggalLahir;
+    }
+    if (widget.jabatan != 0) {
+      valJabatan = widget.jabatan;
+    }
+    if (widget.departemen != 0) {
+      valDepartemen = widget.departemen;
+    }
+    if (widget.pendidikan != 0) {
+      valPendidikan = widget.pendidikan;
+    }
+    if (widget.jk != 0) {
+      valJK = widget.jk;
+    }
+    if (widget.unit != 0) {
+      // valUnitKerja = widget.unit;
+    }
   }
 
   void logout() async {
@@ -242,8 +294,9 @@ class _AddPegawaiState extends State<AddPegawai> {
     );
   }
 
-  void tambahPegawai() async {
+  void editPegawai() async {
     var data = {
+      'idUser': widget.idUser.toString(),
       'namaLengkap': controllerNama.text,
       'email': controllerEmail.text,
       'tempatLahir': controllerTempatlahir.text,
@@ -263,11 +316,11 @@ class _AddPegawaiState extends State<AddPegawai> {
     try {
       SharedPreferences pref = await SharedPreferences.getInstance();
       var token = pref.getString('token');
-      var url = Uri.parse(API_PEGAWAI.tambahPegawai());
+      var url = Uri.parse(API_PEGAWAI.ubahPegawai());
       var response = await http.post(url,
           headers: {'Authorization': '$token'}, body: data);
       var json = jsonDecode(response.body);
-      print('JSON TAMBAH PEGAWAI: $json');
+      print('JSON UBAH PEGAWAI: $json');
       if (response.statusCode == 200) {
         setState(() {
           loading = false;
@@ -297,7 +350,7 @@ class _AddPegawaiState extends State<AddPegawai> {
             text: json['error'].toString());
       }
     } catch (e) {
-      print('Error tambah pegawai: $e');
+      print('Error ubah pegawai: $e');
     }
   }
 
@@ -305,6 +358,7 @@ class _AddPegawaiState extends State<AddPegawai> {
   void initState() {
     // TODO: implement initState
     super.initState();
+    valueUpdate();
     getjabatan();
     getdepartemen();
     getunit();
@@ -324,7 +378,7 @@ class _AddPegawaiState extends State<AddPegawai> {
           },
           icon: const Icon(LineIcons.angleLeft, size: 25, color: Colors.white),
         ),
-        title: Text('Tambah Pegawai'),
+        title: Text('Ubah Pegawai'),
       ),
       body: Column(
         children: [
@@ -373,7 +427,7 @@ class _AddPegawaiState extends State<AddPegawai> {
                                   Icon(FontAwesomeIcons.envelope, size: 25),
                             ),
                             validator: (value) {
-                              if (value == null || value.isEmpty) {
+                             if (value == null || value.isEmpty) {
                                 return 'Kolom Email harus di isi';
                               }
                             },
@@ -450,7 +504,7 @@ class _AddPegawaiState extends State<AddPegawai> {
                                       : Icon(FontAwesomeIcons.eye, size: 25)),
                             ),
                             validator: (value) {
-                              if (value == null || value.isEmpty) {
+                             if (value == null || value.isEmpty) {
                                 return 'Kolom Password Konfirmasi harus di isi';
                               }
                             },
@@ -459,6 +513,7 @@ class _AddPegawaiState extends State<AddPegawai> {
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: DropdownButtonFormField(
+                            value: valJabatan ,
                             decoration: InputDecoration(
                                 isDense: true,
                                 contentPadding: const EdgeInsets.symmetric(
@@ -478,13 +533,14 @@ class _AddPegawaiState extends State<AddPegawai> {
                                 value: item['kdJabatan'],
                               );
                             }).toList(),
-                           validator: (value) =>
+                            validator: (value) =>
                                 value == null ? 'Kolom ini wajib di isi' : null,
                           ),
                         ),
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: DropdownButtonFormField(
+                            value: valDepartemen ,
                             decoration: InputDecoration(
                                 isDense: true,
                                 contentPadding: const EdgeInsets.symmetric(
@@ -511,6 +567,7 @@ class _AddPegawaiState extends State<AddPegawai> {
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: DropdownButtonFormField(
+                            value: valUnitKerja ,
                             decoration: InputDecoration(
                                 isDense: true,
                                 contentPadding: const EdgeInsets.symmetric(
@@ -520,6 +577,7 @@ class _AddPegawaiState extends State<AddPegawai> {
                             onChanged: (value) {
                               setState(() {
                                 valUnitKerja = value;
+                                print(value);
                               });
                             },
                             hint: Text('Pilih Unit Kerja'),
@@ -530,13 +588,14 @@ class _AddPegawaiState extends State<AddPegawai> {
                                 value: item['kdUnitKerja'],
                               );
                             }).toList(),
-                            validator: (value) =>
+                          validator: (value) =>
                                 value == null ? 'Kolom ini wajib di isi' : null,
                           ),
                         ),
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: DropdownButtonFormField(
+                            value: valPendidikan,
                             decoration: InputDecoration(
                                 isDense: true,
                                 contentPadding: const EdgeInsets.symmetric(
@@ -563,6 +622,7 @@ class _AddPegawaiState extends State<AddPegawai> {
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: DropdownButtonFormField(
+                            value: valJK ,
                             decoration: InputDecoration(
                                 isDense: true,
                                 contentPadding: const EdgeInsets.symmetric(
@@ -608,7 +668,9 @@ class _AddPegawaiState extends State<AddPegawai> {
                     )
                   : ElevatedButton(
                       onPressed: () {
-                        tambahPegawai();
+                        if (formKey.currentState!.validate()) {
+                          editPegawai();
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         primary: Colors.blue,

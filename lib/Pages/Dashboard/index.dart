@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontendtes/Pages/Auth/Login/index.dart';
+import 'package:frontendtes/Pages/Auth/Profile/index.dart';
 import 'package:frontendtes/Pages/Pegawai/DataPegawai/index.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -29,7 +30,7 @@ class _DashBoardState extends State<DashBoard>
     // TODO: implement initState
     super.initState();
     getPref();
-    controller = TabController(vsync: this, length: 1);
+    controller = TabController(vsync: this, length: 2);
   }
 
   @override
@@ -45,17 +46,20 @@ class _DashBoardState extends State<DashBoard>
     return Scaffold(
       appBar: AppBar(
         title: Text('Dashboard'),
-        bottom: TabBar(
-          controller: controller, 
-          indicatorColor: Colors.white,
-          tabs: [
+        bottom:
+            TabBar(controller: controller, indicatorColor: Colors.white, tabs: [
           Tab(
             text: 'Pegawai',
-            icon: Icon(FontAwesomeIcons.userTie),
-          )
+          ),
+          Tab(
+            text: 'Profile',
+          ),
         ]),
       ),
-      body: TabBarView(controller: controller, children: [DataPegawai()]),
+      body: TabBarView(controller: controller, children: [
+        DataPegawai(),
+        Profile()
+      ]),
     );
   }
 }
