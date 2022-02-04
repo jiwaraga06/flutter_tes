@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontendtes/Pages/Auth/Login/index.dart';
 import 'package:frontendtes/Pages/Auth/Profile/index.dart';
+import 'package:frontendtes/Pages/Cuti/index.dart';
 import 'package:frontendtes/Pages/Pegawai/DataPegawai/index.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -30,7 +31,7 @@ class _DashBoardState extends State<DashBoard>
     // TODO: implement initState
     super.initState();
     getPref();
-    controller = TabController(vsync: this, length: 2);
+    controller = TabController(vsync: this, length: 3);
   }
 
   @override
@@ -52,12 +53,16 @@ class _DashBoardState extends State<DashBoard>
             text: 'Pegawai',
           ),
           Tab(
+            text: 'Cuti',
+          ),
+          Tab(
             text: 'Profile',
           ),
         ]),
       ),
       body: TabBarView(controller: controller, children: [
         DataPegawai(),
+        Cuti(),
         Profile()
       ]),
     );

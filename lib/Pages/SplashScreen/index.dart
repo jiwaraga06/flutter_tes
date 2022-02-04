@@ -19,7 +19,9 @@ class _SplashScreenState extends State<SplashScreen> {
   void getPref() async {
     SharedPreferences pref = await SharedPreferences.getInstance();
     var token = pref.getString('token');
+    var profile = pref.getString('profile');
     print(token);
+    print(profile);
     if (token == null) {
       Timer(Duration(seconds: 2), () {
         Navigator.pushReplacement(

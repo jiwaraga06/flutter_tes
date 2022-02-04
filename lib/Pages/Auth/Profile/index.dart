@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:async/async.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontendtes/API/Pegawai/index.dart';
+import 'package:frontendtes/Pages/Auth/Login/index.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
 import 'package:image_cropper/image_cropper.dart';
@@ -21,10 +23,20 @@ class Profile extends StatefulWidget {
 class _ProfileState extends State<Profile> {
   File? imageFile;
 
+void logout() async {
+    SharedPreferences pref = await SharedPreferences.getInstance();
+    pref.remove('token');
+    pref.remove('idUser');
+    pref.remove('nama');
+    pref.remove('email');
+    Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => Login()),
+        (Route<dynamic> route) => false);
+  }
+  
   Future<XFile?> pickCamera() async {
-    return await ImagePicker()
-        .pickImage(source: ImageSource.camera)
-        .then((pilihgambar) async {
+    return await ImagePicker().pickImage(source: ImageSource.camera).then((pilihgambar) async {
       if (pilihgambar == null) return;
       print('Gambar: $pilihgambar');
       cropImage(pilihgambar.path).then((cropGambar) {
@@ -40,9 +52,7 @@ class _ProfileState extends State<Profile> {
   }
 
   Future<XFile?> galery() async {
-    return await ImagePicker()
-        .pickImage(source: ImageSource.gallery)
-        .then((pilihgambar) async {
+    return await ImagePicker().pickImage(source: ImageSource.gallery).then((pilihgambar) async {
       if (pilihgambar == null) return;
       print('Gambar: $pilihgambar');
       cropImage(pilihgambar.path).then((cropGambar) {
@@ -106,12 +116,12 @@ class _ProfileState extends State<Profile> {
   }
 
   void gantiPoto() async {
-    print(imageFile);
+    print(imageFile!.path);
     // /data/user/0/com.frontendtes.frontendtes/cache/image_cropper_1643905045377.jpg
+    SharedPreferences pref = await SharedPreferences.getInstance();
+    var token = pref.getString('token');
+    var url = Uri.parse(API_PEGAWAI.adminUbahPoto());
     try {
-      SharedPreferences pref = await SharedPreferences.getInstance();
-      var token = pref.getString('token');
-      var url = Uri.parse(API_PEGAWAI.adminUbahPoto());
       // var response = await http.post(url, headers: {
       //   'Authorization': '$token',
       // }, body: {
@@ -122,20 +132,31 @@ class _ProfileState extends State<Profile> {
       // var json = jsonDecode(response.body);
       // print('JSON poto: $json');
       // if (response.statusCode == 200) {}
-      var stream = http.ByteStream(imageFile!.openRead());
+      var stream = http.ByteStream(DelegatingStream.typed(imageFile!.openRead()));
+      // var stream = http.ByteStream(imageFile!.openRead())..cast();
       var length = await imageFile!.length();
-      var request = http.MultipartRequest('POST', url);
-      var multiPart = http.MultipartFile('files', stream, length,
-          filename: path.basename(imageFile!.path));
+      http.MultipartRequest request = http.MultipartRequest('POST', url);
+      // var multiPart = await http.MultipartFile.fromPath(
+      //   'files',
+      //   imageFile!.path,
+      // );
+      var multiPart = http.MultipartFile(
+        'files',
+        stream,
+        length,
+        filename: path.basename(imageFile!.path),
+      );
       request.headers['Authorization'] = '$token';
       request.fields['idUser'] = '1';
       request.fields['namaFile'] = 'poto_profil';
       request.files.add(multiPart);
 
       var response = await request.send();
+      print(response.statusCode);
       response.stream.transform(utf8.decoder).listen((event) {
+        // print(event);
         // final data = jsonDecode(event);
-        print('res: ${event}');
+        // print('res: ${event}');
       });
     } catch (e) {
       print('Error ganti poto:$e');
@@ -166,10 +187,7 @@ class _ProfileState extends State<Profile> {
                     : Container(
                         width: 120,
                         height: 120,
-                        decoration: BoxDecoration(
-                            image:
-                                DecorationImage(image: FileImage(imageFile!)),
-                            borderRadius: BorderRadius.circular(60)),
+                        decoration: BoxDecoration(image: DecorationImage(image: FileImage(imageFile!)), borderRadius: BorderRadius.circular(60)),
                       ),
                 Positioned(
                   bottom: 0,
@@ -191,7 +209,20 @@ class _ProfileState extends State<Profile> {
           ElevatedButton(
             onPressed: gantiPoto,
             child: Text('ganti'),
-          )
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: SizedBox(
+              height: 45,
+              child: ElevatedButton(
+                onPressed: logout,
+                style: ElevatedButton.styleFrom(
+                  primary: Colors.red[700]
+                ),
+                child: Text('LOGOUT', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
+              ),
+            ),
+          ),
         ],
       ),
     );

@@ -32,18 +32,19 @@ class _LoginState extends State<Login> {
 
   TextEditingController controllerEmail = TextEditingController();
   TextEditingController controllerPassword = TextEditingController();
-  TextEditingController controllerProfile = TextEditingController();
 
   void loginPost() async {
     setState(() {
       loading = true;
     });
+    SharedPreferences pref = await SharedPreferences.getInstance();
+    var profil = pref.getString('profile');
     try {
       var url = Uri.parse(API_AUTH.login());
       var response = await http.post(url, body: {
         'email': controllerEmail.text,
         'password': controllerPassword.text,
-        'profile': '5b46f6a6-71f9-4461-90cc-4f995686d171',
+        'profile': profil,
       });
       var json = jsonDecode(response.body);
       if (response.statusCode == 200) {
@@ -159,24 +160,6 @@ class _LoginState extends State<Login> {
                         )),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-                  child: TextFormField(
-                    controller: controllerProfile,
-                    decoration: InputDecoration(
-                      isDense: true,
-                      hintText: "Masukan Profile",
-                      contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(50)),
-                      focusedBorder: OutlineInputBorder(
-                          borderSide:
-                              BorderSide(color: Color(0xff00ADB5), width: 1.5),
-                          borderRadius: BorderRadius.circular(50)),
-                      prefixIcon: Icon(FontAwesomeIcons.user, size: 25),
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
@@ -190,19 +173,22 @@ class _LoginState extends State<Login> {
                       Text('Loading', style: TextStyle(color: Colors.white))
                     ],
                   )
-                : ElevatedButton(
-                    onPressed: loginPost,
-                    style: ElevatedButton.styleFrom(
-                        primary: Colors.white,
-                        onPrimary: Color(0xff00ADB5),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8.0))),
-                    child: Text('LOGIN',
-                        style: GoogleFonts.poppins(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xff00ADB5))),
-                  ),
+                : SizedBox(
+                  height: 45,
+                  child: ElevatedButton(
+                      onPressed: loginPost,
+                      style: ElevatedButton.styleFrom(
+                          primary: Colors.white,
+                          onPrimary: Color(0xff00ADB5),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.0))),
+                      child: Text('LOGIN',
+                          style: GoogleFonts.poppins(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xff00ADB5))),
+                    ),
+                ),
           ),
           Padding(
             padding: const EdgeInsets.all(12.0),

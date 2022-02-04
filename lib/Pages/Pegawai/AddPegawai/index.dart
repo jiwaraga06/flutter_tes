@@ -57,7 +57,10 @@ class _AddPegawaiState extends State<AddPegawai> {
 
   void logout() async {
     SharedPreferences pref = await SharedPreferences.getInstance();
-    pref.clear();
+    pref.remove('token');
+    pref.remove('idUser');
+    pref.remove('nama');
+    pref.remove('email');
     Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => Login()),
@@ -222,6 +225,7 @@ class _AddPegawaiState extends State<AddPegawai> {
     }
   }
 
+var tgl_lahir;
   void tanggalLahir() {
     DatePicker.showDatePicker(
       context,
@@ -233,8 +237,20 @@ class _AddPegawaiState extends State<AddPegawai> {
       },
       onConfirm: (date) {
         print(date.toString().split(' ')[0]);
-        controllerTanggallahir.text =
-            date.year.toString() + date.month.toString() + date.day.toString();
+         var bulan,day ;
+        if(date.month.toString().length == 1){
+          bulan = '0${date.month.toString()}';
+        } else {
+          bulan = date.month.toString();
+        }
+        if(date.day.toString().length == 1){
+          day = '0${date.day.toString()}';
+        } else {
+          day = date.day.toString();
+        }
+        tgl_lahir =
+            date.year.toString() + bulan + day;
+        controllerTanggallahir.text =date.toString().split(' ')[0];
       },
       currentTime: DateTime.now(),
       locale: LocaleType.id,
@@ -247,7 +263,7 @@ class _AddPegawaiState extends State<AddPegawai> {
       'namaLengkap': controllerNama.text,
       'email': controllerEmail.text,
       'tempatLahir': controllerTempatlahir.text,
-      'tanggalLahir': controllerTanggallahir.text,
+      'tanggalLahir': tgl_lahir,
       'kdJenisKelamin': valJK.toString(),
       'kdPendidikan': valPendidikan.toString(),
       'kdJabatan': valJabatan.toString(),
@@ -608,7 +624,9 @@ class _AddPegawaiState extends State<AddPegawai> {
                     )
                   : ElevatedButton(
                       onPressed: () {
-                        tambahPegawai();
+                        if(formKey.currentState!.validate()){
+                          tambahPegawai();
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         primary: Colors.blue,

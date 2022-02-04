@@ -8,6 +8,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:frontendtes/API/Auth/index.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class InitDatas extends StatefulWidget {
   InitDatas({Key? key}) : super(key: key);
@@ -34,13 +35,15 @@ class _InitDatasState extends State<InitDatas> {
       var json = jsonDecode(response.body);
       print('JSON Init data: $json');
       if (response.statusCode == 200) {
+          SharedPreferences pref = await SharedPreferences.getInstance();
+          pref.setString('profile', json['profile']);
         setState(() {
           loading = false;
         });
         CoolAlert.show(
             context: context,
             type: CoolAlertType.success,
-            text: 'Berhasil Menambahkan Account, Silahkan Login',
+            text: 'Berhasil Menambahkan Account, Silahkan Login\nEmail: ${json['email']}\nPassword: ${json['password']}\nProfile: ${json['profile']}',
             confirmBtnText: 'Yes',
             onConfirmBtnTap: () {
               Navigator.pop(context);
@@ -153,36 +156,42 @@ class _InitDatasState extends State<InitDatas> {
                       Text('Loading', style: TextStyle(color: Colors.white))
                     ],
                   )
-                : ElevatedButton(
-                    onPressed: register,
-                    style: ElevatedButton.styleFrom(
-                        primary: Colors.white,
-                        onPrimary: Color(0xff00ADB5),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8.0))),
-                    child: Text('Registrasi',
-                        style: GoogleFonts.poppins(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xff00ADB5))),
-                  ),
+                : SizedBox(
+                  height: 45,
+                  child: ElevatedButton(
+                      onPressed: register,
+                      style: ElevatedButton.styleFrom(
+                          primary: Colors.white,
+                          onPrimary: Color(0xff00ADB5),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.0))),
+                      child: Text('Registrasi',
+                          style: GoogleFonts.poppins(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xff00ADB5))),
+                    ),
+                ),
           ),
           Padding(
             padding: const EdgeInsets.all(12.0),
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(
-                  primary: Colors.red[800],
-                  onPrimary: Colors.red,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0))),
-              child: Text('KEMBALI',
-                  style: GoogleFonts.poppins(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white)),
+            child: SizedBox(
+              height: 45,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                    primary: Colors.red[800],
+                    onPrimary: Colors.red,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.0))),
+                child: Text('KEMBALI',
+                    style: GoogleFonts.poppins(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white)),
+              ),
             ),
           ),
         ],

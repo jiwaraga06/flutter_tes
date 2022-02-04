@@ -89,6 +89,7 @@ class _EditPegawaiState extends State<EditPegawai> {
     }
     if (widget.tanggalLahir != '') {
       controllerTanggallahir.text = widget.tanggalLahir;
+      tgl_lahir = widget.tanggalLahir;
     }
     if (widget.jabatan != 0) {
       valJabatan = widget.jabatan;
@@ -103,13 +104,16 @@ class _EditPegawaiState extends State<EditPegawai> {
       valJK = widget.jk;
     }
     if (widget.unit != 0) {
-      // valUnitKerja = widget.unit;
+      valUnitKerja = widget.unit;
     }
   }
 
   void logout() async {
     SharedPreferences pref = await SharedPreferences.getInstance();
-    pref.clear();
+    pref.remove('token');
+    pref.remove('idUser');
+    pref.remove('nama');
+    pref.remove('email');
     Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => Login()),
@@ -274,6 +278,7 @@ class _EditPegawaiState extends State<EditPegawai> {
     }
   }
 
+var tgl_lahir;
   void tanggalLahir() {
     DatePicker.showDatePicker(
       context,
@@ -285,8 +290,20 @@ class _EditPegawaiState extends State<EditPegawai> {
       },
       onConfirm: (date) {
         print(date.toString().split(' ')[0]);
-        controllerTanggallahir.text =
-            date.year.toString() + date.month.toString() + date.day.toString();
+          var bulan,day ;
+        if(date.month.toString().length == 1){
+          bulan = '0${date.month.toString()}';
+        } else {
+          bulan = date.month.toString();
+        }
+        if(date.day.toString().length == 1){
+          day = '0${date.day.toString()}';
+        } else {
+          day = date.day.toString();
+        }
+        tgl_lahir =
+            date.year.toString() + bulan + day;
+        controllerTanggallahir.text =date.toString().split(' ')[0];
       },
       currentTime: DateTime.now(),
       locale: LocaleType.id,
@@ -300,7 +317,7 @@ class _EditPegawaiState extends State<EditPegawai> {
       'namaLengkap': controllerNama.text,
       'email': controllerEmail.text,
       'tempatLahir': controllerTempatlahir.text,
-      'tanggalLahir': controllerTanggallahir.text,
+      'tanggalLahir': tgl_lahir,
       'kdJenisKelamin': valJK.toString(),
       'kdPendidikan': valPendidikan.toString(),
       'kdJabatan': valJabatan.toString(),

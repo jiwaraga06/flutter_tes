@@ -23,12 +23,16 @@ class DataPegawai extends StatefulWidget {
 }
 
 class _DataPegawaiState extends State<DataPegawai> {
+  // e25dd255-0d66-4104-aa74-4ecf3d43558a
   var connectionStatus = true;
   var loading = false;
   var daftar = [];
   void logout() async {
     SharedPreferences pref = await SharedPreferences.getInstance();
-    pref.clear();
+    pref.remove('token');
+    pref.remove('idUser');
+    pref.remove('nama');
+    pref.remove('email');
     Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => Login()),
@@ -84,8 +88,6 @@ class _DataPegawaiState extends State<DataPegawai> {
 
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setSystemUIOverlayStyle(
-        const SystemUiOverlayStyle(statusBarColor: Color(0xff00ADB5)));
     return Scaffold(
       body: loading == true
           ? ListView.builder(
