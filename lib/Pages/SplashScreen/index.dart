@@ -18,6 +18,7 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen> {
   void getPref() async {
     SharedPreferences pref = await SharedPreferences.getInstance();
+    // pref.setString('profile', 'e25dd255-0d66-4104-aa74-4ecf3d43558a');
     var token = pref.getString('token');
     var profile = pref.getString('profile');
     print(token);

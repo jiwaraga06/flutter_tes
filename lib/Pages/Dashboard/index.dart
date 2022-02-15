@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:frontendtes/Pages/Absensi/index.dart';
 import 'package:frontendtes/Pages/Auth/Login/index.dart';
 import 'package:frontendtes/Pages/Auth/Profile/index.dart';
 import 'package:frontendtes/Pages/Cuti/index.dart';
@@ -31,7 +32,7 @@ class _DashBoardState extends State<DashBoard>
     // TODO: implement initState
     super.initState();
     getPref();
-    controller = TabController(vsync: this, length: 3);
+    controller = TabController(vsync: this, length: 4);
   }
 
   @override
@@ -56,6 +57,9 @@ class _DashBoardState extends State<DashBoard>
             text: 'Cuti',
           ),
           Tab(
+            text: 'Absensi',
+          ),
+          Tab(
             text: 'Profile',
           ),
         ]),
@@ -63,6 +67,7 @@ class _DashBoardState extends State<DashBoard>
       body: TabBarView(controller: controller, children: [
         DataPegawai(),
         Cuti(),
+        Absensi(),
         Profile()
       ]),
     );

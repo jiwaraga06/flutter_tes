@@ -44,7 +44,7 @@ class _LoginState extends State<Login> {
       var response = await http.post(url, body: {
         'email': controllerEmail.text,
         'password': controllerPassword.text,
-        'profile': profil,
+        'profile': '$profil',
       });
       var json = jsonDecode(response.body);
       if (response.statusCode == 200) {
@@ -57,7 +57,8 @@ class _LoginState extends State<Login> {
         setState(() {
           loading = false;
         });
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => DashBoard()));
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (context) => DashBoard()));
       } else if (response.statusCode == 501) {
         setState(() {
           loading = false;
@@ -89,7 +90,7 @@ class _LoginState extends State<Login> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Uji',
+                Text('frontend',
                     style:
                         GoogleFonts.poppins(fontSize: 35, color: Colors.white)),
                 Text('Tes',
@@ -174,8 +175,8 @@ class _LoginState extends State<Login> {
                     ],
                   )
                 : SizedBox(
-                  height: 45,
-                  child: ElevatedButton(
+                    height: 45,
+                    child: ElevatedButton(
                       onPressed: loginPost,
                       style: ElevatedButton.styleFrom(
                           primary: Colors.white,
@@ -188,7 +189,7 @@ class _LoginState extends State<Login> {
                               fontWeight: FontWeight.w600,
                               color: Color(0xff00ADB5))),
                     ),
-                ),
+                  ),
           ),
           Padding(
             padding: const EdgeInsets.all(12.0),

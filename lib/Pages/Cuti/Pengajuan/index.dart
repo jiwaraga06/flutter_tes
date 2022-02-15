@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:cool_alert/cool_alert.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 import 'package:frontendtes/API/Cuti/index.dart';
@@ -22,20 +23,24 @@ class Pengajuan extends StatefulWidget {
 class _PengajuanState extends State<Pengajuan> {
   var formKey = GlobalKey<FormState>();
   var loading = false;
+  var loadingPost = false;
   var cuti = [];
   TextEditingController controllerTglAwal = TextEditingController();
   TextEditingController controllerTglAkhir = TextEditingController();
   TextEditingController controllerTglPengajuan = TextEditingController();
-  
+
   var tgl_awal, tgl_akhir, tgl_pengajuan;
-  
+
   void logout() async {
     SharedPreferences pref = await SharedPreferences.getInstance();
     pref.remove('token');
     pref.remove('idUser');
     pref.remove('nama');
     pref.remove('email');
-    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => Login()), (Route<dynamic> route) => false);
+    Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => Login()),
+        (Route<dynamic> route) => false);
   }
 
   void tanggalAwal() {
@@ -142,7 +147,8 @@ class _PengajuanState extends State<Pengajuan> {
     var token = pref.getString('token');
     try {
       var url = Uri.parse(API_CUTI.getDataPengajuan(tgl_awal, tgl_akhir));
-      var response = await http.get(url, headers: {'Authorization': token.toString()});
+      var response =
+          await http.get(url, headers: {'Authorization': token.toString()});
       var json = jsonDecode(response.body);
       print(json);
       if (response.statusCode == 200) {
@@ -161,6 +167,15 @@ class _PengajuanState extends State<Pengajuan> {
             onConfirmBtnTap: logout,
           );
         });
+      }else if (response.statusCode == 501) {
+        setState(() {
+          loading = false;
+          CoolAlert.show(
+            context: context,
+            type: CoolAlertType.error,
+            text: json['error'].toString(),
+          );
+        });
       }
     } catch (e) {
       print('Error cuti: $e');
@@ -169,6 +184,9 @@ class _PengajuanState extends State<Pengajuan> {
 
   void postPengajuan() async {
     if (formKey.currentState!.validate()) {
+      setState(() {
+        loadingPost = true;
+      });
       try {
         SharedPreferences pref = await SharedPreferences.getInstance();
         var token = pref.getString('token');
@@ -184,8 +202,17 @@ class _PengajuanState extends State<Pengajuan> {
         print('JSON PENGAJUAN: $json');
         if (response.statusCode == 200) {
           controllerTglPengajuan.clear();
-          CoolAlert.show(context: context, type: CoolAlertType.success, text: json['succes']);
+          setState(() {
+            loadingPost = false;
+          });
+          CoolAlert.show(
+              context: context,
+              type: CoolAlertType.success,
+              text: json['succes']);
         } else if (response.statusCode == 503) {
+          setState(() {
+            loadingPost = false;
+          });
           CoolAlert.show(
             context: context,
             type: CoolAlertType.error,
@@ -194,6 +221,9 @@ class _PengajuanState extends State<Pengajuan> {
             onConfirmBtnTap: logout,
           );
         } else if (response.statusCode == 501) {
+          setState(() {
+            loadingPost = false;
+          });
           CoolAlert.show(
             context: context,
             type: CoolAlertType.error,
@@ -223,7 +253,10 @@ class _PengajuanState extends State<Pengajuan> {
                   onTap: tanggalAwal,
                   readOnly: true,
                   controller: controllerTglAwal,
-                  decoration: InputDecoration(hintText: 'Tanggal Awal', border: OutlineInputBorder(borderRadius: BorderRadius.circular(6.0))),
+                  decoration: InputDecoration(
+                      hintText: 'Tanggal Awal',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(6.0))),
                 ),
               ),
               Padding(
@@ -232,7 +265,10 @@ class _PengajuanState extends State<Pengajuan> {
                   onTap: tanggalAkhir,
                   readOnly: true,
                   controller: controllerTglAkhir,
-                  decoration: InputDecoration(hintText: 'Tanggal Akhir', border: OutlineInputBorder(borderRadius: BorderRadius.circular(6.0))),
+                  decoration: InputDecoration(
+                      hintText: 'Tanggal Akhir',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(6.0))),
                 ),
               ),
             ],
@@ -261,7 +297,10 @@ class _PengajuanState extends State<Pengajuan> {
                   onTap: tanggalPengajuan,
                   readOnly: true,
                   controller: controllerTglPengajuan,
-                  decoration: InputDecoration(hintText: 'Pilih tanggan Pengajuan', border: OutlineInputBorder(borderRadius: BorderRadius.circular(6.0))),
+                  decoration: InputDecoration(
+                      hintText: 'Pilih tanggal Pengajuan',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(6.0))),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Kolom Tanggal pengajuan harus di isi';
@@ -270,6 +309,13 @@ class _PengajuanState extends State<Pengajuan> {
                 ),
               ),
             ),
+            loadingPost == true
+                ? const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: SizedBox(
+                        height: 20, child: CupertinoActivityIndicator()),
+                  )
+                : Container()
           ],
         ),
       ),
@@ -290,60 +336,69 @@ class _PengajuanState extends State<Pengajuan> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         loading == true
-            ? ListView.builder(
-                shrinkWrap: true,
-                itemCount: 8,
-                itemBuilder: (BuildContext context, int index) {
-                  return Shimmer.fromColors(
-                    baseColor: Color(0xFFEEEEEE),
-                    highlightColor: Colors.white,
-                    enabled: true,
-                    child: Container(
-                      margin: const EdgeInsets.all(8.0),
-                      color: Colors.grey,
-                      width: 150,
-                      height: 50,
-                    ),
-                  );
-                })
+            ? Expanded(
+                child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: 8,
+                    itemBuilder: (BuildContext context, int index) {
+                      return Shimmer.fromColors(
+                        baseColor: Color(0xFFEEEEEE),
+                        highlightColor: Colors.white,
+                        enabled: true,
+                        child: Container(
+                          margin: const EdgeInsets.all(8.0),
+                          color: Colors.grey,
+                          width: 150,
+                          height: 50,
+                        ),
+                      );
+                    }),
+              )
             : cuti.isEmpty
                 ? const Padding(
                     padding: EdgeInsets.only(top: 20.0),
                     child: Text('Data Kosong'),
                   )
-                : ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: cuti.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      var data = cuti[index];
-                      return InkWell(
-                        onTap: () {},
-                        child: Container(
-                          margin: const EdgeInsets.all(8.0),
-                          padding: const EdgeInsets.all(8.0),
-                          decoration: BoxDecoration(
-                              color: data['namaSetuju'].toString() == 'null'
-                                  ? Colors.blue[600]
-                                  : data['namaSetuju'] == 'Tidak Setuju'
-                                      ? Colors.red[700]
-                                      : Colors.green[800],
-                              borderRadius: BorderRadius.circular(8.0)),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(data['tglCuti'].toString(), style: GoogleFonts.poppins(fontSize: 23, color: Colors.white)),
-                              Divider(color: Colors.white, thickness: 3.0),
-                              Text(data['namaSetuju'].toString() == 'null' ? 'Belum ada keterangan' : data['namaSetuju'],
-                                  style: TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
-                                  )),
-                            ],
-                          ),
-                        ),
-                      );
-                    }),
+                : Expanded(
+                    child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: cuti.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          var data = cuti[index];
+                          return InkWell(
+                            onTap: () {},
+                            child: Container(
+                              margin: const EdgeInsets.all(8.0),
+                              padding: const EdgeInsets.all(8.0),
+                              decoration: BoxDecoration(
+                                  color: data['namaSetuju'] == null
+                                      ? Colors.blue[600]
+                                      : data['namaSetuju'] == 'Tidak Setuju'
+                                          ? Colors.red[700]
+                                          : Colors.green[800],
+                                  borderRadius: BorderRadius.circular(8.0)),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(data['tglCuti'].toString(),
+                                      style: GoogleFonts.poppins(
+                                          fontSize: 23, color: Colors.white)),
+                                  Divider(color: Colors.white, thickness: 3.0),
+                                  Text(
+                                      data['namaSetuju'].toString() == 'null'
+                                          ? 'Belum ada keterangan'
+                                          : data['namaSetuju'],
+                                      style: TextStyle(
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white,
+                                      )),
+                                ],
+                              ),
+                            ),
+                          );
+                        }),
+                  ),
         Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
@@ -368,7 +423,8 @@ class _PengajuanState extends State<Pengajuan> {
                   child: ElevatedButton(
                     onPressed: buatPengajuan,
                     style: ElevatedButton.styleFrom(primary: Colors.teal),
-                    child: Text('TAMBAH PENGAJUAN CUTI', style: TextStyle(fontSize: 17)),
+                    child: Text('TAMBAH PENGAJUAN CUTI',
+                        style: TextStyle(fontSize: 17)),
                   ),
                 ),
               ),

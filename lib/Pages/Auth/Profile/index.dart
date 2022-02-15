@@ -2,11 +2,16 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:async/async.dart';
+import 'package:cool_alert/cool_alert.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:frontendtes/API/Absen/index.dart';
+import 'package:frontendtes/API/Auth/index.dart';
 import 'package:frontendtes/API/Pegawai/index.dart';
 import 'package:frontendtes/Pages/Auth/Login/index.dart';
 import 'package:http/http.dart' as http;
+import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:path/path.dart' as path;
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
@@ -22,8 +27,34 @@ class Profile extends StatefulWidget {
 
 class _ProfileState extends State<Profile> {
   File? imageFile;
+  var formKey = GlobalKey<FormState>();
+  TextEditingController controllerPasswordLama = TextEditingController();
+  TextEditingController controllerPassword = TextEditingController();
+  TextEditingController controllerPasswordC = TextEditingController();
+  var loading = false;
+  var gantiPassword = false;
+  var showPasswordlama = true;
+  var showPassword = true;
+  var showPasswordC = true;
+  void changePasswordLama() {
+    setState(() {
+      showPasswordlama = !showPasswordlama;
+    });
+  }
 
-void logout() async {
+  void changePassword() {
+    setState(() {
+      showPassword = !showPassword;
+    });
+  }
+
+  void changePasswordC() {
+    setState(() {
+      showPasswordC = !showPasswordC;
+    });
+  }
+
+  void logout() async {
     SharedPreferences pref = await SharedPreferences.getInstance();
     pref.remove('token');
     pref.remove('idUser');
@@ -34,25 +65,29 @@ void logout() async {
         MaterialPageRoute(builder: (context) => Login()),
         (Route<dynamic> route) => false);
   }
-  
+
   Future<XFile?> pickCamera() async {
-    return await ImagePicker().pickImage(source: ImageSource.camera).then((pilihgambar) async {
+    return await ImagePicker()
+        .pickImage(source: ImageSource.camera)
+        .then((pilihgambar) async {
       if (pilihgambar == null) return;
       print('Gambar: $pilihgambar');
       cropImage(pilihgambar.path).then((cropGambar) {
         if (cropGambar == null) return;
         setState(() {
           imageFile = cropGambar;
-          // Timer(Duration(seconds: 2),(){
-          //   gantiPoto();
-          // });
+          Timer(Duration(seconds: 2),(){
+            gantiPoto();
+          });
         });
       });
     });
   }
 
   Future<XFile?> galery() async {
-    return await ImagePicker().pickImage(source: ImageSource.gallery).then((pilihgambar) async {
+    return await ImagePicker()
+        .pickImage(source: ImageSource.gallery)
+        .then((pilihgambar) async {
       if (pilihgambar == null) return;
       print('Gambar: $pilihgambar');
       cropImage(pilihgambar.path).then((cropGambar) {
@@ -132,7 +167,8 @@ void logout() async {
       // var json = jsonDecode(response.body);
       // print('JSON poto: $json');
       // if (response.statusCode == 200) {}
-      var stream = http.ByteStream(DelegatingStream.typed(imageFile!.openRead()));
+      var stream =
+          http.ByteStream(DelegatingStream.typed(imageFile!.openRead()));
       // var stream = http.ByteStream(imageFile!.openRead())..cast();
       var length = await imageFile!.length();
       http.MultipartRequest request = http.MultipartRequest('POST', url);
@@ -153,13 +189,183 @@ void logout() async {
 
       var response = await request.send();
       print(response.statusCode);
-      response.stream.transform(utf8.decoder).listen((event) {
+      response.stream.transform(utf8.decoder).listen((json) {
         // print(event);
         // final data = jsonDecode(event);
         // print('res: ${event}');
+      if (response.statusCode == 200) {
+          CoolAlert.show(
+            context: context,
+            type: CoolAlertType.success,
+            text: json.toString(),
+          );
+        } else if (response.statusCode == 503) {
+          CoolAlert.show(
+            context: context,
+            type: CoolAlertType.error,
+            title: json.toString(),
+            text: 'Silahlan Login kembali',
+            onConfirmBtnTap: logout,
+          );
+        } else if (response.statusCode == 501) {
+          CoolAlert.show(
+            context: context,
+            type: CoolAlertType.error,
+            title: json.toString(),
+          );
+        } else {
+          CoolAlert.show(
+            context: context,
+            type: CoolAlertType.error,
+            title: json.toString(),
+          );
+        }
       });
     } catch (e) {
       print('Error ganti poto:$e');
+    }
+  }
+
+  void updatePassword() async {
+    if (formKey.currentState!.validate()) {
+      try {
+        setState(() {
+          loading = true;
+        });
+        SharedPreferences pref = await SharedPreferences.getInstance();
+        var token = pref.getString('token');
+        var url = Uri.parse(API_AUTH.ubahPassword());
+        var response = await http.post(url, headers: {
+          'Authorization': token.toString(),
+        }, body: {
+          "passwordAsli": controllerPasswordLama.text,
+          "passwordBaru1": controllerPassword.text,
+          "passwordBaru2": controllerPasswordC.text,
+        });
+        var json = jsonDecode(response.body);
+        print('Ganti password: $json');
+        if (response.statusCode == 200) {
+          CoolAlert.show(
+              context: context,
+              type: CoolAlertType.success,
+              text: json['succes']);
+          setState(() {
+            loading = false;
+          });
+        } else if (response.statusCode == 503) {
+          setState(() {
+            loading = false;
+          });
+          CoolAlert.show(
+            context: context,
+            type: CoolAlertType.error,
+            title: json['error'].toString(),
+            text: 'Silahlan Login kembali',
+            onConfirmBtnTap: logout,
+          );
+        } else if (response.statusCode == 501) {
+          setState(() {
+            loading = false;
+          });
+          CoolAlert.show(
+            context: context,
+            type: CoolAlertType.error,
+            title: json['error'].toString(),
+          );
+        }
+      } catch (e) {
+        print('Error ganti password: $e');
+      }
+    }
+  }
+  void checkIN() async{
+    try {
+      SharedPreferences pref = await SharedPreferences.getInstance();
+    var token = pref.getString('token');
+      var url = Uri.parse(API_ABSENSI.checkIN());
+      var response = await http.get(url, headers: {
+        'Authorization' : token.toString()
+      });
+      var json = jsonDecode(response.body);
+      print(json);
+      if (response.statusCode == 200) {
+        setState(() {
+          loading = false;
+        });
+        CoolAlert.show(
+            context: context,
+            type: CoolAlertType.success,
+            text: json['in'].toString(),
+          );
+      } else if (response.statusCode == 503) {
+        setState(() {
+          loading = false;
+          CoolAlert.show(
+            context: context,
+            type: CoolAlertType.error,
+            title: json['error'].toString(),
+            text: 'Silahlan Login kembali',
+            onConfirmBtnTap: logout,
+          );
+        });
+      
+      } else if (response.statusCode == 501) {
+        setState(() {
+          loading = false;
+          CoolAlert.show(
+            context: context,
+            type: CoolAlertType.error,
+            title: json['error'].toString(),
+          );
+        });
+      }
+    } catch (e) {
+      print('Error check in: $e');
+    }
+  }
+  void checkOUT() async{
+    try {
+      SharedPreferences pref = await SharedPreferences.getInstance();
+    var token = pref.getString('token');
+      var url = Uri.parse(API_ABSENSI.checkOUT());
+      var response = await http.get(url, headers: {
+        'Authorization':token.toString()
+      });
+      var json = jsonDecode(response.body);
+      print(json);
+      if (response.statusCode == 200) {
+        setState(() {
+          loading = false;
+        });
+        CoolAlert.show(
+            context: context,
+            type: CoolAlertType.success,
+            text: json['out'].toString(),
+          );
+      } else if (response.statusCode == 503) {
+        setState(() {
+          loading = false;
+          CoolAlert.show(
+            context: context,
+            type: CoolAlertType.error,
+            title: json['error'].toString(),
+            text: 'Silahlan Login kembali',
+            onConfirmBtnTap: logout,
+          );
+        });
+      
+      } else if (response.statusCode == 501) {
+        setState(() {
+          loading = false;
+          CoolAlert.show(
+            context: context,
+            type: CoolAlertType.error,
+            title: json['error'].toString(),
+          );
+        });
+      }
+    } catch (e) {
+      print('Error check out: $e');
     }
   }
 
@@ -187,7 +393,10 @@ void logout() async {
                     : Container(
                         width: 120,
                         height: 120,
-                        decoration: BoxDecoration(image: DecorationImage(image: FileImage(imageFile!)), borderRadius: BorderRadius.circular(60)),
+                        decoration: BoxDecoration(
+                            image:
+                                DecorationImage(image: FileImage(imageFile!)),
+                            borderRadius: BorderRadius.circular(60)),
                       ),
                 Positioned(
                   bottom: 0,
@@ -206,9 +415,160 @@ void logout() async {
               ],
             ),
           ),
-          ElevatedButton(
-            onPressed: gantiPoto,
-            child: Text('ganti'),
+          // ElevatedButton(
+          //   onPressed: gantiPoto,
+          //   child: Text('ganti'),
+          // ),
+          Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: SizedBox(
+                    height: 40,
+                    child: ElevatedButton(
+                      onPressed: checkIN,
+                      style: ElevatedButton.styleFrom(
+                          primary: Colors.green[700],
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6.0))),
+                      child: const Text('Check IN', style:
+                          TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: SizedBox(
+                    height: 40,
+                    child: ElevatedButton(
+                      onPressed: checkOUT,
+                      style: ElevatedButton.styleFrom(
+                          primary: Colors.red[800],
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6.0))),
+                      child:const Text('Check OUT', style:
+                          TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                ),
+              )
+            ],
+          ),
+          Form(
+              key: formKey,
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextFormField(
+                      controller: controllerPasswordLama,
+                      obscureText: showPasswordlama,
+                      decoration: InputDecoration(
+                        hintText: 'Masukan Password Lama',
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                            vertical: 10, horizontal: 8),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(6.0)),
+                        prefixIcon: Icon(FontAwesomeIcons.lock, size: 25),
+                        suffixIcon: InkWell(
+                            onTap: changePasswordLama,
+                            child: showPasswordlama == true
+                                ? Icon(FontAwesomeIcons.eyeSlash, size: 25)
+                                : Icon(FontAwesomeIcons.eye, size: 25)),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Kolom Password harus di isi';
+                        }
+                      },
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextFormField(
+                      controller: controllerPassword,
+                      obscureText: showPassword,
+                      decoration: InputDecoration(
+                        hintText: 'Masukan Password Baru',
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                            vertical: 10, horizontal: 8),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(6.0)),
+                        prefixIcon: Icon(FontAwesomeIcons.lock, size: 25),
+                        suffixIcon: InkWell(
+                            onTap: changePassword,
+                            child: showPassword == true
+                                ? Icon(FontAwesomeIcons.eyeSlash, size: 25)
+                                : Icon(FontAwesomeIcons.eye, size: 25)),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Kolom Password harus di isi';
+                        }
+                      },
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextFormField(
+                      controller: controllerPasswordC,
+                      obscureText: showPasswordC,
+                      decoration: InputDecoration(
+                        hintText: 'Masukan Password Baru Konfirmasi',
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                            vertical: 10, horizontal: 8),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(6.0)),
+                        prefixIcon: Icon(FontAwesomeIcons.lock, size: 25),
+                        suffixIcon: InkWell(
+                            onTap: changePasswordC,
+                            child: showPasswordC == true
+                                ? Icon(FontAwesomeIcons.eyeSlash, size: 25)
+                                : Icon(FontAwesomeIcons.eye, size: 25)),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Kolom Password harus di isi';
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              )),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: SizedBox(
+              height: 45,
+              child:
+                  loading == true
+                      ? Center(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const CupertinoActivityIndicator(),
+                              const Text('Loading')
+                            ],
+                          ),
+                        )
+                      :
+                  ElevatedButton(
+                onPressed: () {
+                  updatePassword();
+                },
+                style: ElevatedButton.styleFrom(primary: Colors.blue),
+                child: Text('Ganti Password',
+                    style:
+                        TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
+              ),
+            ),
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -216,10 +576,10 @@ void logout() async {
               height: 45,
               child: ElevatedButton(
                 onPressed: logout,
-                style: ElevatedButton.styleFrom(
-                  primary: Colors.red[700]
-                ),
-                child: Text('LOGOUT', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
+                style: ElevatedButton.styleFrom(primary: Colors.red[700]),
+                child: Text('LOGOUT',
+                    style:
+                        TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
               ),
             ),
           ),
